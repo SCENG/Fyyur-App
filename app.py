@@ -206,7 +206,7 @@ def create_venue_submission():
       facebook_link=request.form['facebook_link'],
       website=request.form['website'],
       seeking_talent=json.loads(request.form['seeking_talent'].lower()),
-      eeking_description=request.form['seeking_description']
+      seeking_description=request.form['seeking_description']
     )
     
     db.session.add(venue)
@@ -218,7 +218,7 @@ def create_venue_submission():
     # e.g., flash('An error occurred. Venue ' + data.name + ' could not be listed.')
     # see: http://flask.pocoo.org/docs/1.0/patterns/flashing/
   except Exception as e:
-    print(e)
+    
     flash('An error occurred. Venue ' + request.form['name'] + ' could not be listed!')
     db.session.rollback()
   finally:
