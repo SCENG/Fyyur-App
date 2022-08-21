@@ -27,6 +27,8 @@ db = SQLAlchemy(app)
 # TODO: connect to a local postgresql database
 
 migrate = Migrate(app, db)
+
+SQLALCHEMY_DATABASE_URI = 'postgres://enigma:enigma12@localhost/fyyur_db'
 #----------------------------------------------------------------------------#
 # Models.
 #----------------------------------------------------------------------------#
