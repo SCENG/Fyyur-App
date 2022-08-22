@@ -4,6 +4,8 @@
 
 from email.policy import default
 import json
+import os
+import sys
 from urllib import response
 import dateutil.parser
 import babel
@@ -15,6 +17,7 @@ import logging
 from logging import Formatter, FileHandler
 from flask_wtf import Form
 from forms import *
+from models import db, Artist, Venue, Show
 #----------------------------------------------------------------------------#
 # App Config.
 #----------------------------------------------------------------------------#
@@ -28,67 +31,8 @@ db = SQLAlchemy(app)
 
 migrate = Migrate(app, db)
 
-SQLALCHEMY_DATABASE_URI = 'postgres://enigma:enigma12@localhost/fyyur_db'
-#----------------------------------------------------------------------------#
-# Models.
-#----------------------------------------------------------------------------#
+SQLALCHEMY_DATABASE_URI = 'postgresql://postgres:enigma12@localhost/fyyur_db'
 
-class Venue(db.Model):
-    __tablename__ = 'Venue'
-
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String)
-    city = db.Column(db.String(120))
-    state = db.Column(db.String(120))
-    address = db.Column(db.String(120))
-    phone = db.Column(db.String(120))
-    image_link = db.Column(db.String(500))
-    facebook_link = db.Column(db.String(120))
-
-    # TODO: implement any missing fields, as a database migration using Flask-Migrate
-
-    website = db.Column(db.String(120))
-    seeking_talent = db.Column(db.Boolean, default=False)
-    seeking_description = db.Column(db.String(120))
-    shows = db.relationship('show', backref='venue', lazy= True)
-
-    def __repr__(self):
-        return f'<Venue {self.id} {self.name}>'
-
-class Artist(db.Model):
-    __tablename__ = 'Artist'
-
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String)
-    city = db.Column(db.String(120))
-    state = db.Column(db.String(120))
-    phone = db.Column(db.String(120))
-    genres = db.Column(db.String(120))
-    image_link = db.Column(db.String(500))
-    facebook_link = db.Column(db.String(120))
-
-    # TODO: implement any missing fields, as a database migration using Flask-Migrate
-
-    website = db.Column(db.String(120))
-    seeking_venue = db.Column(db.Boolean, default=False)
-    seeking_description = db.Column(db.String(120))
-    shows = db.relationship('Show', backref='artist', lazy=True)
-
-    def __repr__(self):
-        return f'<Artist {self.id} {self.name}>'
-
-# TODO Implement Show and Artist models, and complete all model relationships and properties, as a database migration.
-
-class Show(db.Model):
-    __tablename__ = 'shows'
-
-    id = db.Column(db.Integer, primary_key=True)
-    artist_id = db.Column(db.Integer, db.ForeignKey('artists.id'), nullable=False)
-    venue_id = db.Column(db.Integer, db.ForeignKey('venues.id'), nullable=False)
-    start_time = db.Column(db.DateTime, default=datetime.now(), nullable=False)
-
-    def __repr__(self):
-        return f'<Show {self.id} {self.artist_id} {self.venue_id} {self.start_time}>'
 
 #----------------------------------------------------------------------------#
 # Filters.
@@ -169,18 +113,19 @@ def show_venue(venue_id):
   # shows the venue page with the given venue_id
   # TODO: replace with real venue data from the venues table, using venue_id
 
-  data = Venue.query.filter_by(id=venue_id).first()
-  data.genres = json.loads(data.genres)
+  venue = Venue.query.get(venue_id)
 
-  upcoming_shows = []
-  past_shows = []
-  for show in data.shows:
-    if show.date > datetime.now():
-      upcoming_shows.append(show)
-    else:
-      past_shows.append(show)
-  data.upcoming_shows = upcoming_shows
-  data.past_shows = past_shows
+  past_shows = list(filter(lambda x: x.start_time < datetime.today(), venue.shows))
+  upcoming_shows = list(filter(lambda x: x.start_time >= datetime.today(), venue.shows))
+
+  past_shows = list(map(lambda x: x.show_artist(), past_shows))
+  upcoming_shows = list(map(lambda x: x.show_artist(), upcoming_shows))
+
+  data = venue.to_dict()
+  data['past_shows'] = past_shows
+  data['upcoming_shows'] = upcoming_shows
+  data['past_shows_count'] = len(past_shows)
+  data['upcoming_shows_count'] = len(upcoming_shows)
 
   return render_template('pages/show_venue.html', venue=data)
 
