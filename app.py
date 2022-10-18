@@ -65,17 +65,15 @@ def venues():
   # TODO: replace with real venues data.
   #       num_upcoming_shows should be aggregated based on number of upcoming shows per venue.
 
-  # Querying for cites and states of all venues and unique them
-    areas = db.session.query(Venue.city, Venue.state).distinct(Venue.city, Venue.state)
+    areas = Venue.query.order_by(Venue.city, Venue.state).all()
+    #db.session.query(Venue.city, Venue.state).distinct(Venue.city, Venue.state)
     response = []
     for area in areas:
 
-        # Querying venues and filter them based on area (city, venue)
         data = Venue.query.filter(Venue.state == area.state).filter(Venue.city == area.city).all()
 
         venue_data = []
 
-        # Creating venues' response
         for venue in data:
             venue_data.append({
                 'id': venue.id,
@@ -93,18 +91,13 @@ def venues():
 
 @app.route('/venues/search', methods=['POST'])
 def search_venues():
-  # TODO: implement search on artists with partial string search. Ensure it is case-insensitive.
-  # seach for Hop should return "The Musical Hop".
-  # search for "Music" should return "The Musical Hop" and "Park Square Live Music & Coffee""
   
     search_term = request.form.get('search_term', '')
-    data = db.session.query(Venue).filter(Venue.name.ilike(f'%{search_term}%')).all()
+    data = Venue.query.filter(Venue.name.ilike(f'%{search_term}%')).all()
     count = len(data)
-    response = {
-        "count": count,
-        "data": data
-
-    }
+    response = {}
+    response['count'] = count
+    response[data] = data
 
     return render_template('pages/search_venues.html', results=response, search_term=request.form.get('search_term', ''))
 
@@ -334,7 +327,9 @@ def create_artist_submission():
 def shows():
   # displays list of shows at /shows
   # TODO: replace with real venues data.
-  data = Show.query.join(Artist, Artist.id == Show.artist_id).join(Venue, Venue.id == Show.venue_id).all()
+  data = Show.query.all()
+  #Show.query.join(Artist, Artist.id == Show.artist_id).join(Venue, Venue.id == Show.venue_id).all()
+  """data from Show table, join with Artist and Venue table"""
 
   response = []
   for show in data:
@@ -346,6 +341,7 @@ def shows():
       "artist_image_link": show.artist.image_link,
       "start_time": str(show.start_time)
     })
+  #retrun render_template('pages/shows.html', shows=SHow.query.all())
   return render_template('pages/shows.html', shows=response)
 
 @app.route('/shows/create')

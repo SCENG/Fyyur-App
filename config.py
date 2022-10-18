@@ -10,5 +10,5 @@ DEBUG = True
 
 
 # TODO IMPLEMENT DATABASE URL
-SQLALCHEMY_DATABASE_URI = 'postgresql://enigma:enigma12@localhost/fyyur_db'
+SQLALCHEMY_DATABASE_URI = 'postgresql://postgres@localhost/fyyur_db'
 SQLALCHEMY_TRACK_MODIFICATIONS = False
