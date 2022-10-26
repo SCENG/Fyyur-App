@@ -106,6 +106,7 @@ def show_venue(venue_id):
   # shows the venue page with the given venue_id
   # TODO: replace with real venue data from the venues table, using venue_id
 
+  
   venue = Venue.query.get(venue_id)
 
   past_shows = list(filter(lambda x: x.start_time < datetime.today(), venue.shows))
@@ -144,7 +145,7 @@ def create_venue_submission():
       genres=request.form.getlist('genres'),
       image_link=request.form['image_link'],
       facebook_link=request.form['facebook_link'],
-      website=request.form['website'],
+      website_link=request.form['website'],
       seeking_talent=json.loads(request.form['seeking_talent'].lower()),
       seeking_description=request.form['seeking_description']
     )
@@ -153,17 +154,20 @@ def create_venue_submission():
     db.session.commit()
 
     # on successful db insert, flash success
-    flash('Venue ' + request.form['name'] + ' was successfully listed!')
+    flash('Venue ' + venue.name + ' was successfully listed!')
     #TODO: on unsuccessful db insert, flash an error instead.
     # e.g., flash('An error occurred. Venue ' + data.name + ' could not be listed.')
     # see: http://flask.pocoo.org/docs/1.0/patterns/flashing/
   except Exception as e:
     
-    flash('An error occurred. Venue ' + request.form['name'] + ' could not be listed!')
+    flash('An error occurred. Venue ' + venue.name + ' could not be listed!')
     db.session.rollback()
   finally:
     db.session.close()
   return render_template('pages/home.html')
+
+    # form = VenueForm()
+    # return render_template('forms/new_venue.html', form=form)
 
 
 @app.route('/venues/<venue_id>', methods=['DELETE'])
@@ -249,7 +253,28 @@ def edit_artist(artist_id):
 def edit_artist_submission(artist_id):
   # TODO: take values from the form submitted, and update existing
   # artist record with ID <artist_id> using the new attributes
-  
+  form = ArtistForm()
+  artist = Artist.query.filter_by(id=artist_id).first()
+  if artist:
+    try:
+      artist.name = form.name.data
+      artist.city = form.city.data
+      artist.state = form.state.data
+      artist.phone = form.phone.data
+      artist.genres = form.genres.data
+      artist.facebook_link = form.facebook_link.data
+      artist.website = form.website.data 
+      artist.seeking_venue = form.seeking_venue.data
+      artist.seeking_description = form.seeking_description.data
+      artist.image_link = form.image_link.data
+      form.populate_obj(artist)
+      db.session.add(artist)
+      db.session.commit()
+    except Exception as e:
+      flash('An error occurred. Artist ' + request.form['name'] + ' could not be listed!')
+      db.session.rollback()
+    finally:
+      db.session.close()
 
   return redirect(url_for('show_artist', artist_id=artist_id))
 
@@ -311,7 +336,7 @@ def create_artist_submission():
 
   # on successful db insert, flash success
   except Exception as e:
-    flash('Artist ' + request.form['name'] + ' was successfully listed!')
+    flash('Artist ' + request.form['name'] + ' was  not successfully listed!')
     db.session.rollback()
   finally:
     db.session.close()
@@ -327,9 +352,8 @@ def create_artist_submission():
 def shows():
   # displays list of shows at /shows
   # TODO: replace with real venues data.
-  data = Show.query.all()
-  #Show.query.join(Artist, Artist.id == Show.artist_id).join(Venue, Venue.id == Show.venue_id).all()
-  """data from Show table, join with Artist and Venue table"""
+  data = Show.query.join(Artist, Artist.id == Show.artist_id).join(Venue, Venue.id == Show.venue_id).all()
+  
 
   response = []
   for show in data:
@@ -341,10 +365,10 @@ def shows():
       "artist_image_link": show.artist.image_link,
       "start_time": str(show.start_time)
     })
-  #retrun render_template('pages/shows.html', shows=SHow.query.all())
+  
   return render_template('pages/shows.html', shows=response)
 
-@app.route('/shows/create')
+@app.route('/shows/create', methods=['GET'])
 def create_shows():
   # renders form. do not touch.
   form = ShowForm()
@@ -368,7 +392,7 @@ def create_show_submission():
   # on successful db insert, flash success
   except Exception as e:
     print(e)
-    flash('An error occurred. Show could be listed!')
+    flash('An error occurred. Show could not be listed!')
   finally:
     db.session.close()
   # TODO: on unsuccessful db insert, flash an error instead.
