@@ -65,26 +65,22 @@ def venues():
   # TODO: replace with real venues data.
   #       num_upcoming_shows should be aggregated based on number of upcoming shows per venue.
 
-    areas = Venue.query.order_by(Venue.city, Venue.state).all()
-    #db.session.query(Venue.city, Venue.state).distinct(Venue.city, Venue.state)
+    venues = Venue.query.order_by(Venue.city, Venue.state).all()
     response = []
-    for area in areas:
+    for venue in venues:
 
         data = Venue.query.filter(Venue.state == area.state).filter(Venue.city == area.city).all()
 
-        venue_data = []
 
-        for venue in data:
+        for venu in data:
             venue_data.append({
                 'id': venue.id,
                 'name': venue.name,
-                'num_upcoming_shows': len(db.session.query(Show).filter(Show.start_time > datetime.now()).all())
             })
 
             response.append({
-                'city': area.city,
-                'state': area.state,
-                'venues': venue_data
+                'city': venues.city,
+                'state': venues.state
             })
 
     return render_template('pages/venues.html', areas=response);
